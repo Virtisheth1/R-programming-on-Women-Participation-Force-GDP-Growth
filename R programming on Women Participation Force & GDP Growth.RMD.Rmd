@@ -1,0 +1,438 @@
+---
+title: 'Women Participation on the Workforce and GDP Growth'
+author: "Aitana Hierro, Judy Jiang, Virti Sheeth"
+
+date: "12/3/2023"
+output:
+  html_document: default
+  header-includes: \usepackage{color}
+fontsize: 12pt
+margin: 1in
+---
+
+Table of contents                       | 
+--------------------------------------- | 
+Part A: Abstract                                |
+Part B: Investigation Question and Hypothesis                      |
+Part C: Dataset Analysis                      |
+Part D: Descriptive Statistics          | 
+Part E: Baseline Regression Analysis    | 
+Part F: Alternative Regression Specification  | 
+Part G: Sensitivity Analysis and Limitations  |
+Part H: Conclusion                      | 
+                     |
+```{r setup, echo=FALSE, message=F, warning=F}
+
+#==============================================================================
+#   Every assignment Chunk
+#==============================================================================
+
+  # Clear the working space
+    rm(list = ls())
+
+  #Set working directory
+setwd("/Users/aitanahierrogarzon/Documents/MSBA/5. Econometrics/R- Aplications/FINAL PROJECT/v6")  
+
+
+### Load the packages (all must have been installed)
+    library(tidyverse)
+    library(doBy)
+    library(foreign)
+    library(knitr)
+    library(lmtest)
+    library(readstata13)
+    library(sandwich)
+    library(stargazer)
+    library(AER)
+    library(gdata)
+    library(wooldridge)
+    library(openintro)
+    library(readxl)
+
+# This is the function we use to adjust the errors when we have heteroskedastic data.
+cse=function(reg) {
+    rob=sqrt(diag(vcovHC(reg, type="HC1")))
+    return(rob)
+    }
+```
+
+
+```{r data, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE}
+
+#==============================================================================
+# Data Loading and Exploration
+#==============================================================================
+# Read the data econ.csv as a data frame.
+econ_=as.data.frame(read_excel('econ.xlsx'))
+
+```
+
+
+### Part A: Abstract 
+
+This research project seeks to uncover a potential cause-and-effect connection between the involvement of women in the workforce and a nation's Gross Domestic Product (GDP) growth. Utilizing data from The World Bank's 2019 dataset, the primary focus is to investigate if the participation of women in the labor force directly influences a country's economic growth over time.
+
+The study employs GDP growth (annual%) as the key variable of interest, analyzing how changes in female workforce participation rates might lead to fluctuations in a country's economic prosperity. This analysis takes into account various factors including population size, inflation rates, high-technology exports, the proportion of exports to GDP, unemployment rates, the time required to start a business, and the duration of paid maternity leave.
+
+By delving into this relationship, the objective is to determine if there exists a distinct and provable link between the level of female workforce participation and a country's overall economic advancement. This investigation holds the potential to provide critical insights into how encouraging female participation in the labor force could drive economic growth and foster more robust and inclusive economies.
+
+
+### Part B: Investigation Question and Hypothesis
+
+**Investigation Question:** 
+
+Does the Participation of Females in the Workforce Cause Changes in a Country's GDP Growth?
+This investigation explores whether there's a causal relationship between the level of female participation in a country's labor force and the subsequent growth or decline in its Gross Domestic Product (GDP). Specifically, the research delves into understanding if an increase or decrease in female workforce participation directly influences the economic growth of a nation, as measured by its GDP growth rate.
+
+**Hypothesis: **
+
+"Greater Female Labor Force Participation Positively Influences a Country's Economic Growth and Societal Development."
+This hypothesis proposes that higher levels of female involvement in a nation's workforce contribute positively to economic growth, GDP growth rates, and overall societal development. Countries with increased female labor force participation tend to exhibit higher economic growth rates and potentially experience broader socio-economic advancements.
+
+This hypothesis might further speculate that factors such as gender equality in the workforce, equitable access to opportunities for women, and policies supporting women's participation in the labor market could be correlated with enhanced economic performance at a national level. It explores the potential relationship between female labor force participation and a country's economic and social progress, indicating that higher female workforce involvement might be associated with improved economic outcomes and societal advancements.
+
+
+### Part C: Dataset Analysis  
+
+This Data set has been collected from The World Bank's Data Bank, combining different data bases, such as Gender Statistics and World Development Indicators. 
+
+The data is from 2019 and each country's information is an observation of this data set.
+
+##### 1. Dependent Variable: GDP Growth (annual%)
+
+- **gdpgrowth**: GDP growth (annual %). Annual percentage growth rate of GDP at market prices based on constant local currency. Aggregates are based on constant 2015 prices, expressed in U.S. dollars. GDP is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources.
+
+##### 2. Independent Variable of Interest
+
+- **femlabor**: Labor force, female (% of total labor force). Female labor force comprises women ages 15 and older who supply labor for the production of goods and services during a specified period. It includes people who are currently employed and people who are unemployed but seeking work as well as first-time job-seekers. Not everyone who works is included, however. Unpaid workers, family workers, and students are often omitted, and some countries do not count members of the armed forces. Labor force size tends to vary during the year as seasonal workers enter and leave.
+
+##### 3. Control Variables (Additional Regressors)
+
+- **population**: Population, total. Total population is based on the de facto definition of population, which counts all residents regardless of legal status or citizenship. The values shown are midyear estimates.
+
+- **inflation**: Inflation, consumer prices (annual %). Description	Inflation as measured by the consumer price index reflects the annual percentage change in the cost to the average consumer of acquiring a basket of goods and services that may be fixed or changed at specified intervals, such as yearly. The Laspeyres formula is generally used.
+
+- **hightechexp**: High-technology exports (current US$). High-technology exports are products with high R&D intensity, such as aerospace, computers, pharmaceuticals, scientific instruments, and electrical machinery. Data are in current U.S. dollars.
+
+- **exports**: Exports of goods and services (% of GDP). Exports of goods and services represent the value of all goods and other market services provided to the rest of the world. They include the value of merchandise, freight, insurance, transport, travel, royalties, license fees, and other services, such as communication, construction, financial, information, business, personal, and government services. They exclude compensation of employees and investment income (formerly called factor services) and transfer payments.
+
+- **unemployment**: Unemployment, total (% of total labor force) (national estimate). Unemployment refers to the share of the labor force that is without work but available for and seeking employment. Definitions of labor force and unemployment differ by country.
+
+- **FMR**: Ratio of female to male labor force participation rate (%). Labor force participation rate is the proportion of the population ages 15 and older that is economically active: all people who supply labor for the production of goods and services during a specified period. Ratio of female to male labor force participation rate is calculated by dividing female labor force participation rate by male labor force participation rate and multiplying by 100.
+
+- **daysmayternity**: Length of paid maternity leave (calendar days). The indicator refers to leave available only to the mother for the birth of a child to be taken just before, during and immediately after childbirth.
+
+
+### Part D: Descriptive Statistics
+
+Firstly, we will take a look at the Scatterplot of the Dependent Variable and the Independent Variable of Interest.
+
+```{r scatterp, echo=FALSE, message=F, warning=FALSE, comment="",include=TRUE}
+
+#Using ggplot, we create a scatterplot of gdp against our variable of interest, femlabor 
+ggplot(econ_, aes(x=femlabor, y=gdpgrowth)) + geom_point(col="blue") + 
+        labs(title = "femlabor", x = "femlabor", y = "GDP Growth") +
+        stat_smooth(method=lm, col = "red", se=FALSE)+geom_text(aes(label=country), hjust=1, vjust=1)
+```
+
+
+Looking at the Scatterplot it seems that Female Labor and GDP Growth have a weak positive relationship, meaning that when the ratio on Female Labor increases, the GDP Growth slightly increases. This weak increase is relevant, because even a small GDP Growth means a lot for a country's economy. From this graph we can also easily spot an outlier, in this case it represents Lebanon with a decrease of more than -5 on GDP and a little bit more than 30% of the workforce being female. Lebanon in 2019 went through a Revolution in 17 October of 2019, which caused their government to resign. This is a factor that leads us to decide to keep the outlier out of the analysis. 
+
+This would be the Scatterplot without the outlier.
+
+```{r outlier, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=FALSE}
+# Remove the outlier
+econ=subset(econ_, country!="Lebanon") 
+
+```
+
+```{r scatterplot, echo=FALSE, message=F, warning=FALSE, comment="",include=TRUE}
+
+#Using ggplot, we create a scatterplot of gdp against our variable of interest, femlabor without the outlier
+ggplot(econ, aes(x=femlabor, y=gdpgrowth)) + geom_point(col="blue") + 
+        labs(title = "femlabor", x = "femlabor", y = "GDP Growth") +
+        stat_smooth(method=lm, col = "red", se=FALSE)+geom_text(aes(label=country), hjust=1, vjust=1)
+```
+
+
+
+```{r table1, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=TRUE}
+
+stargazer(econ, type = "text", digits = 2, summary.stat = c("n", "mean", "median", "sd"), title = "Table of Descriptive Statistics", flip = FALSE)
+```
+
+Looking at the Table of Descriptive Statistics, we can learn the following from the variables of interest:
+
+- The mean for **GDP Growth**  is higher than the median, which suggests that the distribution for this variable is right-skewed, meaning that most of the data is clustered around the left tail of the distribution while the right tail of the distribution is longer. Also, the standard deviation is lower than the mean, which suggests small spread in the data.
+
+- The mean for **Female Labor** is lower than the median, which suggests that  the distribution for this variable is left-skewed, meaning that most of the data is clustered around the right tail of the distribution while the left tail of the distribution is longer. Also, the standard deviation is lower than the mean, which suggests small spread in the data.
+
+### Part E: Baseline Regression Analysis
+
+
+```{r regression_simple, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=TRUE}
+
+# Regr 1: gdp on femlabor.
+lr1 = lm(gdpgrowth ~ femlabor, data = econ)
+
+#Regr 2: gdp on femlabor and population divided by 1M.
+lr2 = lm(gdpgrowth ~ femlabor + I(population/1000000) , data = econ)
+
+#Regr 3: gdp on femlabor, population divided by 1M, inflation, unemployment and exports.
+lr3 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports, data = econ)
+
+#Regr 4: gdp on femlabor, population divided by 1M, inflation, unemployment, exports and hightech exports divided by 1M
+lr4 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(hightechexp/1000000), data = econ)
+
+#Regr 5: gdp on femlabor, population divided by 1M, inflation, unemployment, exports, hightech exports divided by 1M and interactions between inflation and unemployment.
+lr5 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(hightechexp/1000000) + (inflation * unemployment)  , data = econ)
+
+#Regr 6: gdp on femlabor, log(population), inflation, unemployment, exports, log(hightech exports) and interactions between inflation and unemployment.
+lr6 = lm(gdpgrowth ~ femlabor + I(log(population))+ inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) , data = econ)
+
+#Regr 7: gdp on femlabor, population divided by 1M, inflation, unemployment, exports, log(hightech exports) and interaction between inflation and unemployment.
+lr7= lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + inflation ^2 + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment)  , data = econ)
+
+#Regr 8: gdp on femlabor, population divided by 1M, inflation, unemployment, exports, log(hightech exports), interaction between inflation and unemployment, quadratic inflation, quadratic exports and quadratic unemployment.
+lr8 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2), data = econ)
+
+#Regr 9: gdp on femlabor, population divided by 1M, inflation, unemployment, exports, log(hightech exports), interaction between inflation and unemployment, quadratic inflation, quadratic exports, quadratic unemployment and cube inflation.
+lr9 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2) + I(inflation ^3), data = econ)
+
+#Regr 10: gdp on femlabor, population divided by 1M, inflation, unemployment, exports, hightech exports divided by 1M, interaction between inflation and unemployment, quadratic inflation, quadratic exports, quadratic unemployment and cube inflation.
+lr10 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2) + I(unemployment ^3), data = econ)
+
+#Table of results
+stargazer(lr1, lr2, lr3, lr4,lr5,lr6,lr7,lr8,lr9,lr10, se = list(cse(lr1), cse(lr2), cse(lr3), cse(lr4),cse(lr5),cse(lr6),cse(lr7),cse(lr8),cse(lr9),cse(lr10)),
+          title = "Results Table", type = "text", star.cutoffs = NA, df = FALSE, digits = 3)
+
+```
+#### Regressions 1-5
+
+We add interest variables and other control variables into regressions step by step.
+
+**Regression 1**
+
+The first regression we run indicates that when we increase female labor proportion by 1%, GDP growth increases by 0.025%. The estimated coefficient is statistically insignificant at 5%. 
+
+**Regression 2**
+
+The second regression we run indicates that, when we add population into the model, increase female labor proportion by 1%, GDP growth increases by 0.037%, holding everything else constant. The estimated coefficient is statistically insignificant at 5%. There is evidence that Regression 1 suffered from a downwards omitted variable bias, as the estimated coefficients increase their value as more variables are added.
+
+**Regression 3**
+
+Considering other important factors influencing GDP growth, inflation, unemployment,and exports are added into the this regression. The third regression we run indicates increase female labor proportion by 1%, GDP growth increases by 0.032%, holding everything else constant. The estimated coefficient is statistically insignificant at 5%. 
+
+**Regression 4**
+
+High tech exports also plays a important role when evaluating the development level of a country.The fourth regression we run indicates that an increase on female labor proportion by 1%, increases GDP growth by 0.050%, holding everything else constant. The estimated coefficient is statistically insignificant at 5%. 
+
+**Regression 5**
+
+Then we considering the interactions between unemployment, inflation, and exports. We choose to take interaction of unemployment and inflation into the regression, as this two factors seem to have a stronger effect on GDP growth than exports and also looks closely related. Increasing female labor proportion by 1%, GDP growth increases by 0.047%, holding everything else constant. The estimated coefficient is statistically insignificant at 5%. 
+
+#### Regressions 6-7
+
+As population and high tech exports are large numeric numbers, we consider to log the number.
+
+**Regression 6**
+
+We log both high tech exports and population, both coefficients are statistically insignificant at 5% level. However,the coefficient of log of high tech exports turns more economically significant.
+
+**Regression 7**
+
+Then we decide only take log of high tech export. Increasing female labor proportion by 1%, GDP growth increases by 0.044%, holding everything else constant. The estimated coefficient is statistically insignificant at 5%. 
+
+#### Regressions 8-10
+
+In these models we consider other non-linearities.
+
+**Regression 8**
+
+Firstly, we consider the quadratic model. We take quadratic of inflation, unemployment, and exports into consideration, the fit of the model increases significantly, from 9.4% to 17.9%. Increasing female labor proportion by 1%, GDP growth increases by 0.078%, holding everything else constant. The estimated coefficient turns statistically significant at 5%! However, it's a relatively slight effect on the economic side. 
+
+**Regression 9**
+
+Secondly, we consider the cubic model. Increasing female labor proportion by 1%, GDP growth increases by 0.06%, holding everything else constant. The estimated coefficient turns statistically insignificant at 5%. 
+
+**Regression 10**
+
+Lastly, we consider replacing cube inflation by cube unemployment into the regression to evaluate if there is a difference. Increasing female labor proportion by 1%, GDP growth increases by 0.072%, holding everything else constant. The estimated coefficient turns statistically significant at 5%. 
+
+**Fit of the Regression**
+
+The adjusted R2 values of the regression increase from Regression 1 to Regression 5 as we add more variables. The residual standard error of the regression also decreases, indicating better fit. The R2 value decreases on Regression 6 and the residual standard error of the regression increases, indicating worse fit. From Regression 7 to 10 the adjusted R2 values of the regression increase. The residual standard error of the regression also decreases, indicating better fit.
+
+The Regression with better fit is Regression 10 with a value of 0.29 R2, this means that the model explains 18,4% of the variation in GDP Growth. 
+
+**Summary**
+
+From Regression 1 to 5 we added the interest variables and other control variables into the regressions step by step. We did not get statistical significance in any of the models. In Regressions 6 and 7 we tested the use of logs on the variables population and high tech exports, which did nothave an effect in achieving statistical significance on the variable of interest. Lastly, we tested for other non-linearities in Regressions 8 to 10. We used a quadratic approach on Regression 8 for the variables inflation, unemployment, and exports and we achieved statistical significance for the variable of interest. In Regressions 9 and 10 we included inflation cube and unemployment cube, respectively. We achieved statistical significance on the variable of interest in Regression 10. 
+
+**Baseline Model Selection**
+
+We will perform different F tests to help us make our model selection.
+
+```{r test 1, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=TRUE}
+
+#Test using lht() command 
+lht(lr8, c("I(inflation^2)=0", "I(unemployment^2)=0","I(exports^2)=0"), white.adjust="hc1")
+```
+
+***Test 1***:
+As inflation, unemployment and  exports are important factors influencing GDP growth, we test whether inflation squared, unemployment squared or exports squared should be also added into the model for Regression 8, meaning we are testing Model 7 against Model 8. F = 3.3389, the result shows it's better to include at least one into the model, so we can reject the null hypothesis that all of them are 0. We can conclude Regression 8 is the chosen one.
+
+
+```{r test 5, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=TRUE}
+
+#Test using lht() command 
+lht(lr9, c("I(inflation^3)=0"), white.adjust="hc1")
+```
+
+***Test 2***:
+Comparing model 8 with model 9, we test the null hypothesis that inflation cube=0. F = 1.5383, we fail to reject the null hypothesis. This means, the quadratic model is better than the cubic one. Model 8 is better than Model 9.
+
+```{r test 6, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=TRUE}
+
+#Test using lht() command 
+lht(lr10, c("I(unemployment^3)=0"), white.adjust="hc1")
+```
+
+***Test 3***:
+Comparing model 8 with model 10, we test the null hypothesis that unemployment cube=0, F = 1.716, we fail to reject the null hypothesis. This means, quadratic model is better than the cubic one. Model 8 is better than Model 9.
+
+**Baseline Model**
+
+```{r baseline, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=TRUE}
+
+#Baseline Model: gdp on femlabor, population divided by 1M, inflation, unemployment, exports, log(hightech exports), interaction between inflation and unemployment, quadratic inflation, quadratic exports and quadratic unemployment.
+lr8 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2), data = econ)
+
+#Table of results
+stargazer(lr8, se = list(cse(lr8)),
+          title = "Results Table", type = "text", star.cutoffs = NA, df = FALSE, digits = 3)
+```
+
+Here's an interpretation of the key elements:
+
+**1. Coefficients:**
+   
+   - **femlabor (Female Labor Participation):** The coefficient is 0.078, indicating that a 1% increase in female labor force participation is associated with a 0.078% increase in GDP growth, holding other variables constant. The coefficient is statistically significant at 5%.
+  
+   - **population/1M (Population):** The coefficient is 0.004, suggesting that a 1M population increase is associated with a 0.004% increase in GDP growth, holding other variables constant.The coefficient is statistically significant at 5%.
+  
+   - **inflation:** The coefficient is 0.091, implying that a 1% increase in the inflation rate is associated with a 0.091% increase in GDP growth, holding other variables constant. The coefficient is statistically insignificant at 5%, which is expected given that the effect is not the expected one, as a higher inflation usually decreases GDP growth.
+ 
+   - **unemployment:** The coefficient is -0.171, indicating that a 1% increase in the unemployment rate is associated with a decrease of 0.171 % in GDP growth, holding other variables constant. The coefficient is statistically insignificant at 5%.
+   - **exports:** The coefficient is 0.049, suggesting that a 1% increase in exports is associated with a 0.049% increase in GDP growth, holding other variables constant. The coefficient is statistically significant at 5%.
+  
+   - **log(hightechexp) (Log-transformed High-Tech Exports):** The coefficient is -0.181, implying that a 1% increase in log-transformed high-tech exports is associated with a 0.181% decrease in GDP growth, holding other variables constant. The coefficient is statistically significant at 5%
+   
+   - **inflation2:** L The coefficient is 0.036, and the associated standard error is 0.018. This indicates that the quadratic effect of inflation has been considered in the model.The positive coefficient suggests a U-shaped relationship between inflation and GDP growth. Initially, as inflation increases, GDP growth rises, but beyond a certain point, further increases in inflation are associated with a decrease in GDP growth, holding other variables constant. The coefficient is statistically significant at 5%
+   
+   - **unemployment2:** The coefficient is 0.010, and the associated standard error is 0.006. Similar to inflation2, this represents the quadratic effect of unemployment on GDP growth. The positive coefficient implies a U-shaped relationship between unemployment and GDP growth. Initially, as unemployment increases, GDP growth decreases, but beyond a certain level of unemployment, further increases may be associated with an increase in GDP growth, holding other variables constant. The coefficient is statistically insignificant at 5%
+   
+   - **exports2: ** The coefficient is -0.0002, and the associated standard error is 0.0001. The negative coefficient suggests a potential inverse relationship between the square of exports and GDP growth, holding other variables constant. However, the effect is relatively small, indicating that the quadratic effect of exports may not be a dominant factor in the model.
+   
+   - **inflation:unemployment (Interaction Term):** The coefficient is -0.056, and the associated standard error is 0.019.This term represents the joint effect of inflation and unemployment on GDP growth, holding other variables constant.The negative coefficient suggests that the simultaneous presence of high inflation and high unemployment is associated with a decrease in GDP growth. This interaction term captures the combined impact of these two economic indicators on the dependent variable.
+
+2. **Constant (Intercept):**
+   - The constant term is 2.149, representing the expected GDP growth when all independent variables are zero.
+
+3. **Model Fit:**
+
+   - **Adjusted R2:** The adjusted R2 adjusts for the number of predictors and is 0.179, indicating that the model accounts for 17.9% of the variation after considering the number of variables.
+   - **Residual Std. Error:** This is the standard deviation of the residuals, and it is 1.774. It represents the average distance between observed and predicted values.
+   - **F Statistic:** The F statistic is 2.852, testing the overall significance of the model. In this case, it suggests that the model is statistically significant.
+
+In summary, the baseline regression provides insights into the relationship between female labor force participation and GDP growth, considering various economic indicators. However, the interpretation should be cautious, and the results should be considered in conjunction with the study's limitations and the complexity of causal relationships in economics.
+
+### Part F: Alternative Regression Specifications
+
+**Additional Regressors**
+
+The following step is to observe how does the labor force participation rates of females compared to males impact the dependent variable, GDP Growth.
+What we are trying to find out is how does the increase of the female laborforce increase GDP Growth in comparison to the male laborforce.
+
+```{r additional_regressors, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=TRUE}
+
+#Baseline Model: gdp on femlabor, population divided by 1M, inflation, unemployment, exports, log(hightech exports), interaction between inflation and unemployment, quadratic inflation, quadratic exports and quadratic unemployment. 
+lr8 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2), data = econ)
+
+#Regr 13: gdp on FMR, population divided by 1M, inflation, unemployment, exports, log(hightech exports), interaction between inflation and unemployment, quadratic inflation, quadratic exports and quadratic unemployment. 
+lr13 = lm(gdpgrowth ~ FMR + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2), data = econ)
+
+stargazer(lr8,lr13, se=list(cse(lr8),cse(lr13)),
+    title="Results of regressions", type="text", 
+    star.cutoffs=NA, df=FALSE, digits=3)
+```
+
+
+We change our interest variable to Female to Male ratio (FMR), and the result indicates that when female to male ratio increases 1%, GDP growth will increase 0.024%, holding everything else constant. Though it is positively correlated, it is statistically insignificant at 5% level. Also, when changing the variable, the R2 value decreased from 17.9% to 14.9%, indicating worse fit of the regression.
+
+We can conclude that a higher percentage of females in the total labor force will lead to faster GDP growth. However, it's hard to conclude that the labor force participation rates of females compared to males would make a bigger difference.
+
+**Instrumental variable regressions**
+
+We decide to include a new control variable, "days of paid maternity leave", so that Female Labor is plausibly exogenous (uncorrelated with u).
+
+
+```{r instrumental, echo=FALSE, message=FALSE, warning=FALSE, comment="",include=TRUE}
+
+#Open the library(ivpack)
+library(ivpack)
+
+
+#Create ivse function to correct heteroskedasticity in errors
+ivse = function(reg) {
+rob = robust.se(reg)[,2]
+return(rob)
+}
+
+#Baseline Model: gdp on femlabor, population divided by 1M, inflation, unemployment, exports, log(hightech exports), interaction between inflation and unemployment, quadratic inflation, quadratic exports and quadratic unemployment. 
+lr8 = lm(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2), data = econ)
+
+#Regr 13: female labor on daysmaternity
+lr13 = lm(femlabor~ daysmaternity, data = econ)
+
+#Regr 14: baseline model including daysmaternity as an instrumental variable.
+lr14 = ivreg(gdpgrowth ~ femlabor + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2) | daysmaternity + I(population/1000000) + inflation + unemployment + exports + I(log(hightechexp)) + (inflation * unemployment) + I(inflation^2) + I(unemployment^2) + I(exports ^2), data=econ)
+
+stargazer(lr8,lr13,lr14, se=list(ivse(lr8),ivse(lr13),ivse(lr14)),
+    title="Results of regressions", type="text", 
+    star.cutoffs=NA, df=FALSE, digits=3)
+
+#Test whether it is a weak instrument
+summary(lr14, vcov = sandwich, diagnostics = TRUE)
+
+```
+
+
+After looking at the F statistic which is smaller than 10, we are able to observe that "days of paid maternity leave" is a week instrument, maybe due to the fact that there is not enough variation on the data. Therefore, we decide to keep our original Baseline Model.
+
+
+### Part G: Sensitivity analysis and limitations
+
+**1. Internal Validity**:
+
+- Omitted Variable Bias: The possibility of omitted variable bias exists, as there may be unobserved factors influencing GDP growth that are not included in the model. For example, factors such as education of the laborforce, political stability, government policies, or technological advancements could be important determinants that we were not able to add into the model due to many missing values on the data.
+
+- Endogeneity: The relationship between female labor force participation and GDP growth may be subject to endogeneity. Factors such as reverse causation or simultaneous causation could impact the results. While attempts were made to address endogeneity through instrumental variable regression, the chosen instrument's weakness raises concerns.
+
+**2. External Validity**:
+
+- Generalizability: The study focuses on a specific set of countries and may not be fully generalizable to all global contexts. Results might differ for countries with different economic structures, cultural norms, or policy environments.
+
+- Timeframe: The study's findings are based on a specific timeframe, and the relationship between female labor force participation and GDP growth may evolve over time. Changes in economic conditions, social norms, or policy landscapes could affect the generalizability of the results.
+
+### Part H: Conclusion 
+
+After having conducted this analysis, we can answer the initial question: **What is the causal effect of the Female Labor Force on GDP Growth?**
+
+The investigation aimed to uncover a potential cause-and-effect link between female workforce participation and a nation's GDP growth. It delved into whether increased female labor force engagement directly influences economic growth. The report explored if there exists a causal relationship between female labor force participation and a country's GDP growth. The evidence indicates a positive correlation, suggesting that higher female workforce engagement may contribute to economic advancement. The findings from the investigation align with this hypothesis, hinting at a potential correlation between increased female labor participation and enhanced economic outcomes.
+
+The study's analysis implies a positive association between increased female labor force participation and GDP growth. However, establishing a direct causal relationship demands further nuanced exploration considering the complex interplay of economic, social, and policy factors because we had 14 different regressions testing for different variables and in all of the cases there has been a positive relationship between "Female Labor" and "GDP Growth", but this relationship was not always statistically significant.
+
+
+
+
