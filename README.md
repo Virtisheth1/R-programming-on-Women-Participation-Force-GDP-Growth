@@ -1,6 +1,6 @@
-# R-programming-on-Women-Participation-Force-GDP-Growth
+Women Participation Force & GDP Growth
 
-In our project titled "# R-programming-on-Women-Participation-Force-GDP-Growth," we embarked on a comprehensive analysis using The World Bank's 2019 dataset. Our primary aim was to delve into the influence of women's participation in the labor force on a country's economic growth over time. Leveraging multiple econometric tools and techniques, we meticulously crafted our analytical approach.
+In the project titled "Women Participation Force & GDP Growth " we embarked on a comprehensive analysis using The World Bank's 2019 dataset. Our primary aim was to delve into the influence of women's participation in the labor force on a country's economic growth over time. Leveraging multiple econometric tools and techniques, we meticulously crafted our analytical approach.
 
 Applying multiple regression, we structured our analysis, incorporating an array of control variables to substantiate the causality of the estimated effects. The decision-making regarding the functional form ranged from log-specifications to linear models, factoring in considerations like skewness in variable distributions. We explored the viability of polynomials versus linearity and introduced interaction effects between variables to explore nuanced causal relationships.
 
